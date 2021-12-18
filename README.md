@@ -202,7 +202,7 @@ serieConModelo = serie.descomposicion(metodo, L=12)
 
 ## <div id="id180"></div>Modelo
 
-## <div id="id190"></div>Graficar un modelo
+### <div id="id190"></div>Graficar un modelo
 
 Para graficar cualquier objeto de tipo *Modelo* se utiliza la función *graficar()*
 
