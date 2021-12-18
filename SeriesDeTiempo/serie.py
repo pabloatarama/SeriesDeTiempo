@@ -242,7 +242,7 @@ class Modelo:
 
     def calcularErrores(self):
         self.data["residual"] = self.data["yt"] - self.data["Ft"]
-        self.data["|e|"] = abs(self.data["residual"])
+        # self.data["|e|"] = abs(self.data["residual"])
         self.errores = Errores(self.data, self.modelo)
         self.residual = Residual(self.data["residual"],self.modelo)
 

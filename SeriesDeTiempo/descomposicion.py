@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import SeriesDeTiempo.serie
+import copy
 
 class Descomposicion(SeriesDeTiempo.serie.Modelo):
     """docstring for Descomposicion."""
@@ -47,7 +48,11 @@ class Descomposicion(SeriesDeTiempo.serie.Modelo):
             
             self.data["Ft"] = self.data["St"]+self.data["Tt"]
 
+
+            a, b = np.polyfit(self.data.index[self.data["yt-St"].notna()], self.data["yt-St"][self.data["yt-St"].notna()], deg=1)
+            self.data["Tt_Reg"] = a * self.data.index + b
             
+            self.data["Ft_Reg"] = self.data["Tt_Reg"] + self.data["St"]
             
         elif metodo=="multiplicativo":
             
@@ -70,16 +75,25 @@ class Descomposicion(SeriesDeTiempo.serie.Modelo):
 
             self.data["yt/St"] = self.data["yt"]/self.data["St"]
             
-            self.data["Ft"] = self.data["St"]*self.data["Tt"]
+            self.data["Ft"] = self.data["St"] * self.data["Tt"]
             
+            
+            a, b = np.polyfit(self.data.index[self.data["yt/St"].notna()], self.data["yt/St"][self.data["yt/St"].notna()], deg=1)
+            self.data["Tt_Reg"] = a * self.data.index + b
+            
+            self.data["Ft_Reg"] = self.data["Tt_Reg"] * self.data["St"]
             
         else:
             raise SeriesDeTiempo.serie.ErrorDeMetodo(metodo,self.modelo)
         
+        self.regA = a; self.regB = b
 
         self.tendencia = Tendencia(self.data["Tt"], self.modelo)
         self.estacionalidad = Estacionalidad(self.data["St"][1:L+1], self.modelo)
         self.calcularErrores()
+        
+        self.data["residual_Reg"] = self.data["yt"] - self.data["Ft_Reg"]
+        self.residualReg = SeriesDeTiempo.serie.Residual(self.data["residual_Reg"],self.modelo)
         
     def __repr__(self):
         return (
@@ -102,8 +116,26 @@ class Descomposicion(SeriesDeTiempo.serie.Modelo):
         ax.grid(linestyle=":")
         plt.show()
             
-    def pronosticarMetodo(self, p, t):
+    def pronosticarMetodo(self, p, t0):
         
+        nuevo = copy.deepcopy(self)
+               
+        if t0==None:
+            t0 = len(nuevo.data)
+        
+        
+        t = t0
+        while t < int(t0) + int(p):
+
+            if (nuevo.data.index != t).all():
+                nuevo.data.loc[t]=np.nan
+                
+                
+            nuevo.data["Ft_Reg"][t] = self.regA * nuevo.data.index[t] + self.regB
+            t = t + 1
+        
+        # nuevo.calcularErrores()
+        return nuevo
         
         
         
