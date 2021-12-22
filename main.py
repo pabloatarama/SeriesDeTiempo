@@ -14,14 +14,21 @@ fac
 
 
 import SeriesDeTiempo.serie as st
-serie = st.Serie(pd.read_csv("data.csv"),"Ventas")
-auto = serie.autocorrelacion(20)
+serie = st.Serie(pd.read_csv("data.csv"),"AirPas")
+serie = serie.ln()
+prueba = serie.levene(alfa = 0.05,L=12)
+prueba
+
+
+
+prueba.data
+prueba.W
+prueba.F
 
 
 
 
-auto.fac.k(3).graficar()
-auto.graficar()
+
 
 
 

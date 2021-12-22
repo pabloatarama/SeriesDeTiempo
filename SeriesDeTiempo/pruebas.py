@@ -104,5 +104,85 @@ class DurbinWatson:
         "Cantidad de datos: " + str(len(self.data))
         
         )
+
+class Levene:
+    def __init__(self, data, alfa, L):
         
+        self.alfa = alfa
+        
+        self.data = data
+        
+        self.data = self.data.drop([0])
+
+
+        # self.data = data.to_frame()
+        
+        N = len(data)-1
+        Ni = L
+        
+        k = N / L
+        
+        self.data["i"] = np.nan
+        self.data["Yi."] = np.nan
+        
+        
+        a=0; i = 1
+        while i<=k:
+            self.data["i"][a:a+L] = i
+            self.data["Yi."][a:a+L] = self.data["yt"][a:a+L].mean()
+            
+            a = a + L
+            i = i + 1
+        
+        self.data["i"] = self.data["i"].astype(int)
+        
+        self.data["Zij"] = abs( self.data["yt"] - self.data["Yi."] )
+        
+        self.data["Zi."] = np.nan
+        
+        a=0
+        while a<N:
+            self.data["Zi."][a:a+L] = self.data["Zij"][a:a+L].mean()
+            
+            a = a + L
+
+        Zmedia = self.data["Zij"].mean()
+        
+        
+        
+        j=1; sumaNum = 0
+        while j<=N:
+            sumaNum = sumaNum + Ni * ( self.data["Zi."][j] - Zmedia )**2
+            j = j + L
+            
+        j=1; sumaDen = 0
+        while j<=N:
+            sumaDen = sumaDen + ( self.data["Zij"][j] - self.data["Zi."][j] )**2
+            j = j + 1
+        
+        self.W = ( ( N-k ) / ( k-1 ) ) * ( sumaNum / sumaDen )
+        
+        self.gl1 = k-1
+        self.gl2 = N-k
+        
+        self.p_valor = 1 - sct.f.cdf(self.W,self.gl1,self.gl2)
+        
+        
+        
+    def __repr__(self):
+        
+        if self.p_valor > (self.alfa):
+            resultado = "Se aprueba la hipotesis nula (H₀)"
+        else:
+            resultado = "NO se aprueba la hipotesis nula (H₀)"
+        
+        
+        return (
+        "PRUEBA DE LEVENE" + "\n\n" +
+        "H₀: Las varianzas son homocedásticas, es decir son iguales\n" +  
+        "H₁: Las varianzas con heterocedasticidad, es decir no son iguales\n\n" +
+        "W: " + str(self.W) + "\tgl1: " + str(self.gl1) + "\tgl2: " + str(self.gl2) + "\tSig: " + str(round(self.p_valor,4)) + "\n\n" +
+        str(resultado)
+        
+        )
         

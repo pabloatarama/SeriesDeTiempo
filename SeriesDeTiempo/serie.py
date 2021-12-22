@@ -218,7 +218,12 @@ class Serie():
             ax.grid(linestyle=":")
 
         plt.show()
-
+        
+        
+    def levene(self, alfa=0.05, L=4):
+        import SeriesDeTiempo.pruebas
+        return SeriesDeTiempo.pruebas.Levene(self.data[:], alfa=alfa, L=L)
+    
 class ErrorDeMetodo(Exception):
     def __init__(self, valor, modelo):
         self.valor = valor
