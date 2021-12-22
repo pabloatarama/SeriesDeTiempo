@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import copy
 
 
 
@@ -9,6 +10,9 @@ class Serie():
        columna: Es la columna del DataFrame que se utilizará como datos"""
 
     def __init__(self, data, columna=""):
+        
+        pd.options.display.max_columns = None
+        
         pd.set_option('mode.chained_assignment', None)
         # super(SeriesDeTiempo, self).__init__()
 
@@ -23,7 +27,7 @@ class Serie():
         else:
             raise ErrorDeSerie(columna)
 
-        self.data["t"]=np.arange(0,len(self.data))
+        self.data["t"] = np.arange(0,len(self.data))
         self.data["t"] = self.data["t"].astype(int)
         self.data.set_index("t",inplace=True)
         self.data.loc[len(self.data)]=np.nan
@@ -99,6 +103,26 @@ class Serie():
         L: Longitud de la estacionalidad, por defecto es 12"""
         import SeriesDeTiempo.descomposicion
         return SeriesDeTiempo.descomposicion.Descomposicion(self.data[:], metodo, L)
+    
+    def diff(self, d=1):
+        """n: Es la cantidad de diferencias que se aplicará a la serie"""
+        nuevo = copy.deepcopy(self)
+        i=0
+        while i<d:
+            nuevo.data["yt"] = nuevo.data["yt"] - nuevo.data["yt"].shift()
+            i = i + 1
+        return nuevo
+
+    def ln(self):
+        nuevo = copy.deepcopy(self)
+        nuevo.data["yt"] = np.log(nuevo.data["yt"])
+
+        return nuevo
+    
+    def autocorrelacion(self, n=16):
+        """n: cantidad de autocorrelaciones"""
+        import SeriesDeTiempo.autocorrelacion
+        return SeriesDeTiempo.autocorrelacion.Autocorrelacion(self.data[:],n=n)
 
     def graficar(self,titulo="", xlabel="", ylabel="", tendencia=False):
         """Grafíca la serie de tiempo\n

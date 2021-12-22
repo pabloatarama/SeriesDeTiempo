@@ -11,7 +11,9 @@ class Descomposicion(SeriesDeTiempo.serie.Modelo):
     def __init__(self, data, metodo, L):
         self.modelo = "DE DESCOMPOSICIÓN"
         self.data = data
-        self.comprobado = True
+        self.comprobado = False
+        self.L = L
+        self.metodo = metodo
 
         # self.data["Mt"] = np.nan
         
@@ -101,20 +103,21 @@ class Descomposicion(SeriesDeTiempo.serie.Modelo):
         str(self.data)
         )
 
-    def graficar(self,titulo=""):
-        """Grafíca la serie de tiempo"""
-        fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
-        # self.data[["yt","Ft"]].plot()
+    # def graficar(self,titulo=""):
+    #     """Grafíca la serie de tiempo"""
+    #     fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+    #     # self.data[["yt","Ft"]].plot()
 
-        ax.plot(self.data["yt"],label="yt")
-        ax.plot(self.data["Tt"],label="Tt")
-        if titulo=="":
-            ax.set_title("MODELO "+self.modelo)
-        else:
-            ax.set_title(titulo)
-        ax.legend()
-        ax.grid(linestyle=":")
-        plt.show()
+    #     ax.plot(self.data["yt"],label="yt")
+    #     ax.plot(self.data["Tt"],label="Tt")
+    #     ax.plot(self.data["Ft_Reg"],label="Ft_Reg")
+    #     if titulo=="":
+    #         ax.set_title("MODELO "+self.modelo)
+    #     else:
+    #         ax.set_title(titulo)
+    #     ax.legend()
+    #     ax.grid(linestyle=":")
+    #     plt.show()
             
     def pronosticarMetodo(self, p, t0):
         
@@ -123,18 +126,30 @@ class Descomposicion(SeriesDeTiempo.serie.Modelo):
         if t0==None:
             t0 = len(nuevo.data)
         
-        
+
         t = t0
         while t < int(t0) + int(p):
-
             if (nuevo.data.index != t).all():
                 nuevo.data.loc[t]=np.nan
                 
-                
-            nuevo.data["Ft_Reg"][t] = self.regA * nuevo.data.index[t] + self.regB
+            ts = t%self.L
+            if ts == 0:
+                ts = self.L
+            
+            nuevo.data["St"][t] = nuevo.data["St"][ts]
+                  
+            if self.metodo == "aditivo":
+                nuevo.data["Ft_Reg"][t] = (self.regA * nuevo.data.index[t] + self.regB) + nuevo.data["St"][t]
+            elif self.metodo == "multiplicativo":
+                nuevo.data["Ft_Reg"][t] = (self.regA * nuevo.data.index[t] + self.regB) * nuevo.data["St"][t]
+            else:
+                raise SeriesDeTiempo.serie.ErrorDeMetodo(self.metodo,self.modelo)
+            
             t = t + 1
         
-        # nuevo.calcularErrores()
+        nuevo.calcularErrores()
+        self.data["residual_Reg"] = self.data["yt"] - self.data["Ft_Reg"]
+        self.residualReg = SeriesDeTiempo.serie.Residual(self.data["residual_Reg"],self.modelo)
         return nuevo
         
         
