@@ -4,10 +4,12 @@ import SeriesDeTiempo.serie as st
 # AIRPASS
 
 serieA = st.Serie(pd.read_csv("AirPass.csv"),"AirPass"); serieA.graficar(titulo="Serie de AirPass")
+
 serieA.levene(0.05,L=12)
 
 serieAln = serieA.ln(); serieAln.graficar(titulo="Serie ln de AirPass")
 
+serieAln.levene(0.05,L=12)
 
 serieA.cajas(L=12,titulo="Diagrama de cajas AirPass")
 serieAln.cajas(L=12,titulo="Diagrama ln de cajas AirPass")
@@ -16,8 +18,20 @@ serieAln.cajas(L=12,titulo="Diagrama ln de cajas AirPass")
 autoA = serieA.autocorrelacion(n=20); autoA
 autoA.graficar()
 
-autoAln = serieAln.autocorrelacion(n=20); autoAln
+autoAln = serieAln.autocorrelacion(n=60); autoAln
 autoAln.graficar()
+
+serielndiff = serieAln.diff(1)
+serielndiff.cajas(L=12,titulo="Diagrama ln de cajas AirPass")
+
+autoAlndiff = serielndiff.autocorrelacion(n=60); autoAlndiff
+autoAlndiff.graficar()
+
+
+
+
+serielndiff2 = serielndiff.diff(1)
+serielndiff2.cajas(L=12,titulo="Diagrama de cajas AirPass")
 
 
 autoA.fac.k(3).graficar("Autocorrelación simple para k = 3")
