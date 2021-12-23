@@ -77,7 +77,7 @@ class Autocorrelacion:
         if titulo!="":
             axs[0].set_title(titulo)
         else:
-            axs[0].set_title("FUNCIÓN DE AUTOCORRELACIÓN SIMPLE")
+            axs[0].set_title("FUNCIONES DE AUTOCORRELACIÓN")
             
         # axs[0].set_xlabel("k")
         axs[0].set_ylabel("FAC")

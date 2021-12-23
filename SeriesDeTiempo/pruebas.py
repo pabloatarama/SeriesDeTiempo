@@ -180,7 +180,7 @@ class Levene:
         return (
         "PRUEBA DE LEVENE" + "\n\n" +
         "H₀: Las varianzas son homocedásticas, es decir son iguales\n" +  
-        "H₁: Las varianzas con heterocedasticidad, es decir no son iguales\n\n" +
+        "H₁: Las varianzas son heterocedásticas, es decir no son iguales\n\n" +
         "W: " + str(self.W) + "\tgl1: " + str(self.gl1) + "\tgl2: " + str(self.gl2) + "\tSig: " + str(round(self.p_valor,4)) + "\n\n" +
         str(resultado)
         
