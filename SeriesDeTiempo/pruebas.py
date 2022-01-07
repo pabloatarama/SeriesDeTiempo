@@ -4,8 +4,13 @@ import numpy as np
 import scipy.stats as sct
 import matplotlib.pyplot as plt
 
+from matplotlib.figure import Figure
+import base64
+from io import BytesIO
+
 class QQPlot():
     def __init__(self, data, alfa):
+        self.gui = False
         self.alfa = alfa
         self.data = data.to_frame()
         self.data = self.data[self.data["residual"].notna()]
@@ -38,7 +43,12 @@ class QQPlot():
         titulo: Título de la gráfica\n
         xlabel: Título del eje x\n
         ylabel: Título del eje y"""
-        fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+        
+        if not self.gui:
+            fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+        else:
+            fig = Figure(dpi=300, figsize=(9.6,5.4))
+            ax = fig.subplots()
         
         
         a, b = np.polyfit(self.data["Z"], self.data["residual"], deg=1)
@@ -78,8 +88,15 @@ class QQPlot():
             ax.set_ylabel("residuales")
 
         ax.grid(linestyle=":")
-        # ax.legend()
-        plt.show()
+        
+        if not self.gui:
+            plt.show()
+        else:
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            # Embed the result in the html output.
+            data = base64.b64encode(buf.getbuffer()).decode("ascii")
+            return data
         
 class DurbinWatson:
     def __init__(self, data):

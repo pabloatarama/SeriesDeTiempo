@@ -5,6 +5,10 @@ import numpy as np
 import SeriesDeTiempo.serie
 import copy
 
+from matplotlib.figure import Figure
+import base64
+from io import BytesIO
+
 class Descomposicion(SeriesDeTiempo.serie.Modelo):
     """docstring for Descomposicion."""
 
@@ -103,21 +107,6 @@ class Descomposicion(SeriesDeTiempo.serie.Modelo):
         str(self.data)
         )
 
-    # def graficar(self,titulo=""):
-    #     """Grafíca la serie de tiempo"""
-    #     fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
-    #     # self.data[["yt","Ft"]].plot()
-
-    #     ax.plot(self.data["yt"],label="yt")
-    #     ax.plot(self.data["Tt"],label="Tt")
-    #     ax.plot(self.data["Ft_Reg"],label="Ft_Reg")
-    #     if titulo=="":
-    #         ax.set_title("MODELO "+self.modelo)
-    #     else:
-    #         ax.set_title(titulo)
-    #     ax.legend()
-    #     ax.grid(linestyle=":")
-    #     plt.show()
             
     def pronosticarMetodo(self, p, t0):
         
@@ -176,8 +165,12 @@ class Tendencia:
         titulo: Título de la gráfica, por defecto es el nombre del modelo\n
         xlabel: Título del eje x\n
         ylabel: Título del eje y"""
-        fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
-        # self.data[["yt","Ft"]].plot()
+        
+        if not self.gui:
+            fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+        else:
+            fig = Figure(dpi=300, figsize=(9.6,5.4))
+            ax = fig.subplots()
 
         ax.plot(self.data,label="Tt")
         if titulo == "":
@@ -193,7 +186,15 @@ class Tendencia:
             
         ax.legend()
         ax.grid(linestyle=":")
-        plt.show()
+        
+        if not self.gui:
+            plt.show()
+        else:
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            # Embed the result in the html output.
+            data = base64.b64encode(buf.getbuffer()).decode("ascii")
+            return data
 
 class Estacionalidad:
     def __init__(self, data, modelo):
@@ -211,8 +212,12 @@ class Estacionalidad:
         titulo: Título de la gráfica, por defecto es el nombre del modelo\n
         xlabel: Título del eje x\n
         ylabel: Título del eje y"""
-        fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
-        # self.data[["yt","Ft"]].plot()
+        
+        if not self.gui:
+            fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+        else:
+            fig = Figure(dpi=300, figsize=(9.6,5.4))
+            ax = fig.subplots()
 
         ax.plot(self.data,label="St")
         
@@ -229,4 +234,12 @@ class Estacionalidad:
             
         ax.legend()
         ax.grid(linestyle=":")
-        plt.show()
+        
+        if not self.gui:
+            plt.show()
+        else:
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            # Embed the result in the html output.
+            data = base64.b64encode(buf.getbuffer()).decode("ascii")
+            return data

@@ -1,4 +1,7 @@
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+import base64
+from io import BytesIO
 import pandas as pd
 import numpy as np
 import copy
@@ -10,9 +13,9 @@ class Serie():
        columna: Es la columna del DataFrame que se utilizará como datos"""
 
     def __init__(self, data, columna=""):
-        
+
         pd.options.display.max_columns = None
-        
+
         pd.set_option('mode.chained_assignment', None)
         # super(SeriesDeTiempo, self).__init__()
 
@@ -32,6 +35,7 @@ class Serie():
         self.data.set_index("t",inplace=True)
         self.data.loc[len(self.data)]=np.nan
         self.data = self.data.shift()
+        self.gui = False
         # self.data.index = self.data["t"]
 
     def __repr__(self):
@@ -103,14 +107,18 @@ class Serie():
         L: Longitud de la estacionalidad, por defecto es 12"""
         import SeriesDeTiempo.descomposicion
         return SeriesDeTiempo.descomposicion.Descomposicion(self.data[:], metodo, L)
-    
-    def diff(self, d=1):
-        """n: Es la cantidad de diferencias que se aplicará a la serie"""
+
+    def diff(self, d=1, n=1):
+        """d: Es la cantidad de diferencias que se aplicará a la serie\n
+        n: Es el desfase que tendrá las diferencias al aplicarse"""
         nuevo = copy.deepcopy(self)
         i=0
         while i<d:
-            nuevo.data["yt"] = nuevo.data["yt"] - nuevo.data["yt"].shift()
+            nuevo.data["yt"] = (nuevo.data["yt"] - nuevo.data["yt"].shift(n)).shift(-n)
             i = i + 1
+        nuevo.data = nuevo.data.dropna()
+        nuevo.data.loc[0] = [np.nan]
+        nuevo.data = nuevo.data.sort_index()
         return nuevo
 
     def ln(self):
@@ -118,7 +126,7 @@ class Serie():
         nuevo.data["yt"] = np.log(nuevo.data["yt"])
 
         return nuevo
-    
+
     def autocorrelacion(self, n=16):
         """n: cantidad de autocorrelaciones"""
         import SeriesDeTiempo.autocorrelacion
@@ -129,8 +137,12 @@ class Serie():
         titulo: Título de la gráfica\n
         xlabel: Título del eje x\n
         ylabel: Título del eje y"""
-        fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
-        # self.data[["yt","Ft"]].plot()
+
+        if not self.gui:
+            fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+        else:
+            fig = Figure(dpi=300, figsize=(9.6,5.4))
+            ax = fig.subplots()
 
         ax.plot(self.data["yt"],label="yt")
         if titulo!="":
@@ -139,7 +151,7 @@ class Serie():
             ax.set_xlabel(xlabel)
         if ylabel != "":
             ax.set_ylabel(ylabel)
-            
+
         if tendencia:
             a, b = np.polyfit(self.data.index[np.invert(np.isnan(self.data["yt"]))],
                               self.data["yt"][np.invert(np.isnan(self.data["yt"]))],
@@ -149,7 +161,15 @@ class Serie():
 
         ax.grid(linestyle=":")
         ax.legend()
-        plt.show()
+
+        if not self.gui:
+            plt.show()
+        else:
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            # Embed the result in the html output.
+            data = base64.b64encode(buf.getbuffer()).decode("ascii")
+            return data
 
 
     def cajasEstacionalidad(self, ciclo=4,comienzo=1,titulo="",xlabel="",ylabel="",grilla=True):
@@ -160,7 +180,11 @@ class Serie():
         ylabel: Título del eje y\n
         grilla: Grilla de gráfica (True o False), por defecto True"""
 
-        fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+        if not self.gui:
+            fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+        else:
+            fig = Figure(dpi=300, figsize=(9.6,5.4))
+            ax = fig.subplots()
 
         t=comienzo
         data = []
@@ -182,7 +206,14 @@ class Serie():
         if grilla:
             ax.grid(linestyle=":")
 
-        plt.show()
+        if not self.gui:
+            plt.show()
+        else:
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            # Embed the result in the html output.
+            data = base64.b64encode(buf.getbuffer()).decode("ascii")
+            return data
 
 
     def cajas(self, L=4,comienzo=1,titulo="",xlabel="",ylabel="",grilla=True):
@@ -194,7 +225,11 @@ class Serie():
         grilla: Grilla de gráfica (True o False), por defecto True"""
 
 
-        fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+        if not self.gui:
+            fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+        else:
+            fig = Figure(dpi=300, figsize=(9.6,5.4))
+            ax = fig.subplots()
 
 
         t=comienzo
@@ -217,13 +252,20 @@ class Serie():
         if grilla:
             ax.grid(linestyle=":")
 
-        plt.show()
-        
-        
+        if not self.gui:
+            plt.show()
+        else:
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            # Embed the result in the html output.
+            data = base64.b64encode(buf.getbuffer()).decode("ascii")
+            return data
+
+
     def levene(self, alfa=0.05, L=4):
         import SeriesDeTiempo.pruebas
         return SeriesDeTiempo.pruebas.Levene(self.data[:], alfa=alfa, L=L)
-    
+
 class ErrorDeMetodo(Exception):
     def __init__(self, valor, modelo):
         self.valor = valor
@@ -244,13 +286,19 @@ class Modelo:
 
     def __init__(self):
         self.prop = "asd"
+        self.gui = False
 
     def graficar(self,titulo="", xlabel="", ylabel=""):
         """Grafíca la serie de tiempo con el modelo\n
         titulo: Título de la gráfica, por defecto es el nombre del modelo\n
         xlabel: Título del eje x\n
         ylabel: Título del eje y"""
-        fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+
+        if not self.gui:
+            fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+        else:
+            fig = Figure(dpi=300, figsize=(9.6,5.4))
+            ax = fig.subplots()
 
         ax.plot(self.data["yt"],label="yt")
         ax.plot(self.data["Ft"],label="Ft")
@@ -263,11 +311,19 @@ class Modelo:
 
         if ylabel != "":
             ax.set_ylabel(ylabel)
-                   
-        
+
+
         ax.grid(linestyle=":")
         ax.legend()
-        plt.show()
+
+        if not self.gui:
+            plt.show()
+        else:
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            # Embed the result in the html output.
+            data = base64.b64encode(buf.getbuffer()).decode("ascii")
+            return data
 
     def calcularErrores(self):
         self.data["residual"] = self.data["yt"] - self.data["Ft"]
@@ -314,6 +370,7 @@ class Residual():
     def __init__(self, data, modelo):
         self.data = data;
         self.modelo = modelo
+        self.gui = False
 
     def __repr__(self):
         return (
@@ -326,8 +383,13 @@ class Residual():
         titulo: Título de la gráfica, por defecto es el nombre del modelo\n
         xlabel: Título del eje x\n
         ylabel: Título del eje y"""
-        fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
-        # self.data[["yt","Ft"]].plot()
+
+        if not self.gui:
+            fig, ax = plt.subplots(dpi=300, figsize=(9.6,5.4))
+        else:
+            fig = Figure(dpi=300, figsize=(9.6,5.4))
+            ax = fig.subplots()
+
 
         ax.plot(self.data,label="residual")
         # plt.axhline(y=0, linestyle="dashed")
@@ -346,7 +408,15 @@ class Residual():
         ax.grid()
 
         ax.legend()
-        plt.show()
+
+        if not self.gui:
+            plt.show()
+        else:
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            # Embed the result in the html output.
+            data = base64.b64encode(buf.getbuffer()).decode("ascii")
+            return data
 
     def qqPlot(self, alfa=0.05):
         """Genera la gráfica QQ Plot\n
